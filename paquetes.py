@@ -98,3 +98,37 @@ class Paquete(ABC):
     def __str__(self):
         return (f"{self.tipo()} {self.__guia} ({self.__transportadora})"
                 f" -> {self.ubicacion()}")
+
+class Sobre(Paquete):
+
+    def dias_maximos(self):
+        return 30
+
+    def ubicacion(self):
+        return "Casillero del apartamento"
+
+class Caja(Paquete):
+
+    def dias_maximos(self):
+        return 15
+
+    def ubicacion(self):
+        return "Estantería de portería"
+
+class Perecedero(Paquete):
+
+    def dias_maximos(self):
+        return 1
+
+    def ubicacion(self):
+        return "Nevera, avisar de inmediato"
+
+class Voluminoso(Paquete):
+
+    def dias_maximos(self):
+        return 7
+
+    def ubicacion(self):
+        return "Bodega"
+
+TIPOS = {"Sobre": Sobre, "Caja":Caja, "Perecedero":Perecedero, "Voluminoso":Voluminoso}
