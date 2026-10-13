@@ -247,7 +247,7 @@ class Unidad:
     def entregar_guia(self, bloque, numero, guia, documento,
                       momento=None):
         apto = self.apartamento(bloque, numero)
-        return apartamento
+        return apto.entregar(guia, documento, momento)
 
     def rechazar_del_camion(self):
         return self.__camion.desencolar()
@@ -263,4 +263,3 @@ class Unidad:
 
     def descargar_camion(self, paquete):
         self.__camion.encolar(paquete)
-
