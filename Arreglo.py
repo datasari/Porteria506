@@ -1,3 +1,6 @@
+from excepciones import PosicionInvalida
+from excepciones import ArregloLleno
+from excepciones import TipoInvalido
 class Arreglo:
     def __init__(self, capacity):
         self._numEntries= 0
@@ -12,7 +15,7 @@ class Arreglo:
         self.datos[self.__numEntries]=dato
         self.__numEntries +=1    
 
-    def obtener(Self, posicion):
+    def obtener(self, posicion):
         if not (0<= posicion , self.__numEntries):
             raise PosicionInvalida(posicion)
         return self.datos[posicion]
@@ -37,6 +40,6 @@ class Arreglo:
          return True    
     def __str__(self):
          resultado=""
-         for i in rangge(self.__numEntries):
+         for i in range(self.__numEntries):
              resultado += f" {i+1}. {self.datos[i]}"
          return resultado
