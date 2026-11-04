@@ -1,5 +1,6 @@
-from arreglo import Arreglo
+from Arreglo import Arreglo
 from recepcion import ListaPaquetes, Cola
+from Arbol import ArbolGuias
 from excepciones import (ErrorPorteria, ApartamentoInexistente,
                          BloqueInexistente, GuiaDuplicada, SinPendientes,
                          ResidenteNoAutorizado, ResidenteDuplicado)
@@ -188,6 +189,7 @@ class Unidad:
         self.__nombre = nombre
         self.__bloques = ArregloBloques(cantidad_bloques)
         self.__camion = Cola()
+        self.__guias = ArbolGuias()
 
     @property
     def nombre(self):
@@ -229,7 +231,15 @@ class Unidad:
             total += self.__bloques.obtener(i).contar_pendientes()
         return total
 
-    def buscar_pendiente(self, guia):
+    @property
+    def guias(self):
+        return self.__guias
+    def buscar_pendiente(self,guia):
+        paquete= self.__guias.buscar(str(guia).strip().upper())
+        if paquete is None or paquete.estado != "Pendiente":
+            return None
+        return paquete
+    def buscar_pendiente_lineal(self,guia):
         guia = str(guia).strip().upper()
         for i in range(self.__bloques.cantidad()):
             bloque = self.__bloques.obtener(i)
@@ -240,6 +250,8 @@ class Unidad:
                     if paquete is not None:
                         return paquete
         return None
+
+
     def entregar(self, bloque, numero, documento, momento=None):
         apto = self.apartamento(bloque, numero)
         return apto.entregar_todos(documento, momento)
