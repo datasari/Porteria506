@@ -11,6 +11,7 @@ from paquetes import Paquete, Sobre, Caja, Perecedero, Voluminoso
 from recepcion import ListaPaquetes, Cola
 from unidad import Unidad, Residente, ArregloResidentes
 from archivos import cargar_todo, guardar_todo
+from Arbol import ArbolGuias
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -193,11 +194,30 @@ def probar_archivos():
         shutil.rmtree(carpeta)
 
 
+def probar_arbol():
+    arbol = ArbolGuias()
+    revisar("árbol vacío", arbol.esta_vacio() and arbol.buscar("X") is None)
+    for g in ["M5", "C3", "T8", "A1", "E4", "Z9"]:
+        arbol.insertar(Caja(g, "X"))
+    revisar("cantidad del árbol", arbol.cantidad() == 6)
+    revisar("en orden sale ordenado", arbol.en_orden() == "A1 C3 E4 M5 T8 Z9")
+    revisar("buscar en el árbol", arbol.buscar("E4").guia == "E4" and arbol.buscar("B2") is None)
+    revisar("altura", arbol.altura() == 3)
+    arbol.insertar(Sobre("E4", "Y"))
+    revisar("misma guía reemplaza", arbol.cantidad() == 6 and arbol.buscar("E4").tipo() == "Sobre")
+    u = unidad_de_prueba()
+    u.registrar_llegada(2, 1204, Caja("G1", "X"))
+    revisar("unidad busca con el árbol", u.buscar_pendiente("g1") is u.buscar_pendiente_lineal("G1"))
+    u.entregar(2, 1204, "111")
+    revisar("entregado ya no es pendiente", u.buscar_pendiente("G1") is None and u.guias.buscar("G1") is not None)
+
+
 if __name__ == "__main__":
     for nombre, prueba in [("Excepciones", probar_excepciones), ("Arreglo", probar_arreglo),
                            ("Paquetes", probar_paquetes), ("Lista de pendientes", probar_lista),
                            ("Cola", probar_cola), ("Unidad", probar_unidad),
-                           ("Camión", probar_camion), ("Archivos", probar_archivos)]:
+                           ("Camión", probar_camion), ("Archivos", probar_archivos),
+                           ("Árbol de guías", probar_arbol)]:
         antes = RESULTADOS["mal"]
         prueba()
         print(f"{'✅' if RESULTADOS['mal'] == antes else '❌'} {nombre}")
