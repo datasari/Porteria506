@@ -256,6 +256,7 @@ class Unidad:
         if self.buscar_pendiente(paquete.guia) is not None:
             raise GuiaDuplicada(paquete.guia)
         apartamento.recibir(paquete)
+        self.__guias.insertar(paquete)
         return apartamento
 
     def entregar(self, bloque, numero, documento, momento=None):
