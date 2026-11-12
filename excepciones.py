@@ -3,7 +3,7 @@ class ErrorPorteria(Exception):
 
 class ApartamentoInexistente(ErrorPorteria):
     def __init__(self,bloque,numero):
-        super().__init__(f"El apartamento{numero} no existe en el bloque {bloque}")
+        super().__init__(f"El apartamento {numero} no existe en el bloque {bloque}")
 
 class BloqueInexistente(ErrorPorteria):
     def __init__(self,bloque):
