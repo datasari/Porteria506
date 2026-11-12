@@ -1,13 +1,4 @@
-class ErrorPorteria(Exception):
-    pass
-
-class SinPendientes(ErrorPorteria):
-    def __init__(self, mensaje="No hay pendientes por atender"):
-        super().__init__(mensaje)
-
-class CamionVacio(ErrorPorteria):
-    def __init__(self, mensaje="El camión esta vacío"):
-        super().__init__(mensaje)
+from excepciones import SinPendientes, CamionVacio
 
 class Nodo:
     def __init__(self, dato, siguiente = None):

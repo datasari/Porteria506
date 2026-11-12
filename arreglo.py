@@ -3,24 +3,24 @@ from excepciones import ArregloLleno
 from excepciones import TipoInvalido
 class Arreglo:
     def __init__(self, capacity):
-        self._numEntries= 0
+        self.__numEntries= 0
         self.__capacity= capacity
         self.datos= [None]* capacity
 
     def agregar(self,dato):
         if self.esta_lleno():
-            raise ArregloLleno(self.__capaciy)
+            raise ArregloLleno(self.__capacity)
         if not self.validar_tipo(dato):
             raise TipoInvalido(dato)
         self.datos[self.__numEntries]=dato
         self.__numEntries +=1    
 
     def obtener(self, posicion):
-        if not (0<= posicion , self.__numEntries):
+        if not (0<= posicion < self.__numEntries):
             raise PosicionInvalida(posicion)
         return self.datos[posicion]
     def eliminar (self,posicion)    :
-                if not (0<= posicion , self.__numEntries):
+                if not (0<= posicion < self.__numEntries):
                     raise PosicionInvalida(posicion)
                 eliminado=self.datos[posicion]
                 for i in range(posicion, self.__numEntries-1):

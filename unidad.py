@@ -1,4 +1,4 @@
-from Arreglo import Arreglo
+from arreglo import Arreglo
 from recepcion import ListaPaquetes, Cola
 from Arbol import ArbolGuias
 from excepciones import (ErrorPorteria, ApartamentoInexistente,
@@ -251,6 +251,13 @@ class Unidad:
                         return paquete
         return None
 
+    def registrar_llegada(self, bloque, numero, paquete):
+        apartamento = self.apartamento(bloque, numero)
+        if self.buscar_pendiente(paquete.guia) is not None:
+            raise GuiaDuplicada(paquete.guia)
+        apartamento.recibir(paquete)
+        self.__guias.insertar(paquete)
+        return apartamento
 
     def entregar(self, bloque, numero, documento, momento=None):
         apto = self.apartamento(bloque, numero)
@@ -263,12 +270,12 @@ class Unidad:
 
     def rechazar_del_camion(self):
         return self.__camion.desencolar()
-        return apto.entregar(guia, documento, momento)
-        apartamento = self.registrar_llegada(bloque, numero, paquete)
-        self.__camion.desencolar()
 
     def registrar_del_camion(self, bloque, numero):
         paquete = self.__camion.ver_frente()
+        apartamento = self.registrar_llegada(bloque, numero, paquete)
+        self.__camion.desencolar()
+        return apartamento
 
     def siguiente_del_camion(self):
         return self.__camion.ver_frente()

@@ -62,33 +62,33 @@ class ArbolGuias:
         actual=actual.derecho
     self.__tamano +=1   
 
-def buscar (self,guia):
-  actual = self.__raiz
-  while actual is not None:
-    if guia == actual.paquete.guia:
-      return actual.paquete
-    if guia < actual.paquete.guia:
-      actual = actual.izquierdo
-    else:
-      actual = actual.derecho
-  return None
+  def buscar (self,guia):
+    actual = self.__raiz
+    while actual is not None:
+      if guia == actual.paquete.guia:
+        return actual.paquete
+      if guia < actual.paquete.guia:
+        actual = actual.izquierdo
+      else:
+        actual = actual.derecho
+    return None
 
-def altura(self):
-    return self.__altura(self.__raiz)
+  def altura(self):
+      return self.__altura(self.__raiz)
 
-def __altura(self,nodo):
+  def __altura(self,nodo):
+      if nodo is None:
+          return 0
+      izquierda = self.__altura(nodo.izquierdo)
+      derecha = self.__altura(nodo.derecho)
+      return 1+max(izquierda,derecha)
+  def en_orden(self):
+    return self.__en_orden(self.__raiz).strip()
+
+  def __en_orden(self,nodo):
     if nodo is None:
-        return 0
-    izquierda = self.__altura(nodo.izquierdo)
-    derecha = self.__altura(nodo.derecho)
-    return 1+max(izquierda,derecha)
-def en_orden(self):
-  return self.__en_orden(self.__raiz).strip()
-
-def __en_orden(self,nodo):
-  if nodo is None:
-    return ""
-  izquierda=self.__en_orden(nodo.izquierdo)
-  derecha=self.__en_orden(nodo.derecho)
-  return izquierda+ nodo.paquete.guia + " " + derecha 
+      return ""
+    izquierda=self.__en_orden(nodo.izquierdo)
+    derecha=self.__en_orden(nodo.derecho)
+    return izquierda+ nodo.paquete.guia + " " + derecha 
 

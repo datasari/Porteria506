@@ -1,15 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-FORMATO_FECHA = "%Y-%m-%d %H:%M:%S"
+from excepciones import ErrorPorteria
 
-class ErrorPorteria(Exception):
-    pass
-
-class ApartamenteInexistente(ErrorPorteria):
-    def __init__(self, bloque, numero):
-        super().__init__(f"El apartamento {numero} "
-                         f"no existe en el bloque {bloque}")
+FORMATO_FECHA = "%Y-%m-%d %H:%M"
 
 class Paquete(ABC):
     def __init__(self, guia, transportadora, llegada=None):
@@ -41,12 +35,16 @@ class Paquete(ABC):
         return self.__estado
 
     @property
-    def entrega_en(self):
+    def entregado_en(self):
         return self.__entregado_en
 
     @property
     def recibido_por(self):
         return self.__recibido_por
+
+    @property
+    def destino(self):
+        return self.__destino
 
     def asignar_destino(self, apartamento):
         self.__destino = apartamento
