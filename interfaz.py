@@ -1,22 +1,23 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from archivos import cargar_todo, guardar_todo
+from excepciones import ErrorPorteria
 from paquetes import Sobre, Caja, Perecedero, Voluminoso
-from recepcion import ListaPaquetes, Cola, SinPendientes, CamionVacio
+from recepcion import CamionVacio
 
+CARPETA_DATOS = "datos"
+ERRORES = (ErrorPorteria, CamionVacio)
 
 class InterfazRecepcion:
 
     def __init__(self, ventana):
         self.ventana = ventana
         self.ventana.title("Sistema de Recepción de Paquetes")
-        self.ventana.geometry("1150x680")
-        self.ventana.minsize(900, 550)
+        self.ventana.geometry("1150x760")
+        self.ventana.minsize(900, 600)
 
-        self.lista = ListaPaquetes()
-        self.camion = Cola()
-
-        self.guias_camion = []
+        self.unidad, _ = cargar_todo(CARPETA_DATOS)
 
         self.tipos = {
             "Sobre": Sobre,
@@ -32,47 +33,43 @@ class InterfazRecepcion:
 
         titulo = ttk.Label(
             self.ventana,
-            text="RECEPCIÓN Y DESPACHO DE PAQUETES",
+            text="RECEPCIÓN Y ENTREGA DE PAQUETES",
             font=("Arial", 20, "bold")
         )
         titulo.pack(pady=15)
 
         ttk.Label(
             self.ventana,
-            text="Sistema de control de paquetes en portería"
+            text=f"{self.unidad.nombre}: "
+                 f"{self.unidad.total_apartamentos()} apartamentos"
         ).pack(pady=(0, 10))
 
         formulario = ttk.LabelFrame(
             self.ventana,
-            text="Registrar paquete",
+            text="Paquete y apartamento",
             padding=12
         )
         formulario.pack(fill="x", padx=20, pady=5)
 
         ttk.Label(
-            formulario,
-            text="Número de guía:"
+            formulario, text="Número de guía:"
         ).grid(row=0, column=0, padx=5, pady=7, sticky="w")
 
         self.entrada_guia = ttk.Entry(formulario, width=23)
         self.entrada_guia.grid(row=0, column=1, padx=5, pady=7)
 
         ttk.Label(
-            formulario,
-            text="Transportadora:"
+            formulario, text="Transportadora:"
         ).grid(row=0, column=2, padx=5, pady=7, sticky="w")
 
-        self.entrada_transportadora = ttk.Entry(
-            formulario, width=23
-        )
+        self.entrada_transportadora = ttk.Entry(formulario, width=23)
         self.entrada_transportadora.grid(
             row=0, column=3, padx=5, pady=7
         )
 
         ttk.Label(
-            formulario,
-            text="Tipo de paquete:"
-        ).grid(row=1, column=0, padx=5, pady=7, sticky="w")
+            formulario, text="Tipo de paquete:"
+        ).grid(row=0, column=4, padx=5, pady=7, sticky="w")
 
         self.tipo = ttk.Combobox(
             formulario,
@@ -80,24 +77,45 @@ class InterfazRecepcion:
             state="readonly",
             width=20
         )
-        self.tipo.grid(row=1, column=1, padx=5, pady=7)
+        self.tipo.grid(row=0, column=5, padx=5, pady=7)
         self.tipo.set("Sobre")
 
-        ttk.Button(
-            formulario,
-            text="Registrar paquete",
-            command=self.registrar
-        ).grid(row=1, column=2, padx=5, pady=7)
+        ttk.Label(
+            formulario, text="Bloque:"
+        ).grid(row=1, column=0, padx=5, pady=7, sticky="w")
+
+        self.entrada_bloque = ttk.Entry(formulario, width=23)
+        self.entrada_bloque.grid(row=1, column=1, padx=5, pady=7)
+
+        ttk.Label(
+            formulario, text="Apartamento:"
+        ).grid(row=1, column=2, padx=5, pady=7, sticky="w")
+
+        self.entrada_apto = ttk.Entry(formulario, width=23)
+        self.entrada_apto.grid(row=1, column=3, padx=5, pady=7)
+
+        ttk.Label(
+            formulario, text="Documento:"
+        ).grid(row=1, column=4, padx=5, pady=7, sticky="w")
+
+        self.entrada_documento = ttk.Entry(formulario, width=23)
+        self.entrada_documento.grid(row=1, column=5, padx=5, pady=7)
 
         ttk.Button(
             formulario,
-            text="Buscar paquete",
+            text="Bajar al camión",
+            command=self.bajar_al_camion
+        ).grid(row=2, column=1, padx=5, pady=7)
+
+        ttk.Button(
+            formulario,
+            text="Buscar por guía",
             command=self.buscar
-        ).grid(row=1, column=3, padx=5, pady=7)
+        ).grid(row=2, column=3, padx=5, pady=7)
 
         marco_tabla = ttk.LabelFrame(
             self.ventana,
-            text="Paquetes en recepción",
+            text="Paquetes pendientes en portería",
             padding=10
         )
         marco_tabla.pack(
@@ -106,9 +124,9 @@ class InterfazRecepcion:
 
         columnas = (
             "guia",
+            "destino",
             "transportadora",
             "tipo",
-            "estado",
             "dias",
             "limite",
             "vencimiento",
@@ -123,9 +141,9 @@ class InterfazRecepcion:
 
         encabezados = {
             "guia": "Guía",
+            "destino": "Bloque-Apto",
             "transportadora": "Transportadora",
             "tipo": "Tipo",
-            "estado": "Estado",
             "dias": "Días en portería",
             "limite": "Máximo de días",
             "vencimiento": "Vencimiento",
@@ -134,9 +152,9 @@ class InterfazRecepcion:
 
         anchos = {
             "guia": 100,
+            "destino": 100,
             "transportadora": 120,
             "tipo": 100,
-            "estado": 125,
             "dias": 110,
             "limite": 105,
             "vencimiento": 100,
@@ -176,99 +194,164 @@ class InterfazRecepcion:
         marco_tabla.rowconfigure(0, weight=1)
         marco_tabla.columnconfigure(0, weight=1)
 
-        self.tabla.tag_configure(
-            "vencido",
-            background="#FFDADA"
-        )
+        self.tabla.tag_configure("vencido", background="#FFDADA")
+        self.tabla.tag_configure("en_plazo", background="#DDF5E5")
 
-        self.tabla.tag_configure(
-            "en_plazo",
-            background="#DDF5E5"
-        )
-
-        self.tabla.tag_configure(
-            "en_camion",
-            background="#FFF0CC"
-        )
-
-        operaciones = ttk.LabelFrame(
+        marco_cola = ttk.LabelFrame(
             self.ventana,
-            text="Operaciones",
+            text="Camión (cola de llegada)",
             padding=10
         )
-        operaciones.pack(fill="x", padx=20, pady=5)
+        marco_cola.pack(fill="x", padx=20, pady=5)
 
         ttk.Button(
-            operaciones,
-            text="Agregar al camión",
-            command=self.cargar_camion
-        ).pack(side="left", padx=5)
-
-        ttk.Button(
-            operaciones,
+            marco_cola,
             text="Ver frente de la cola",
             command=self.ver_frente
         ).pack(side="left", padx=5)
 
         ttk.Button(
-            operaciones,
-            text="Despachar paquete",
-            command=self.despachar
+            marco_cola,
+            text="Asignar al apartamento",
+            command=self.asignar
         ).pack(side="left", padx=5)
 
         ttk.Button(
-            operaciones,
-            text="Actualizar tabla",
-            command=self.actualizar_tabla
+            marco_cola,
+            text="Rechazar paquete",
+            command=self.rechazar
         ).pack(side="left", padx=5)
-
-        marco_cola = ttk.LabelFrame(
-            self.ventana,
-            text="Estado del camión",
-            padding=10
-        )
-        marco_cola.pack(fill="x", padx=20, pady=10)
 
         self.info_cola = ttk.Label(
             marco_cola,
-            text="Paquetes en cola: 0 | Camión vacío"
+            text="Paquetes en el camión: 0 | Camión vacío"
         )
-        self.info_cola.pack(anchor="w")
+        self.info_cola.pack(side="left", padx=15)
 
-    def registrar(self):
+        entregas = ttk.LabelFrame(
+            self.ventana,
+            text="Entregas",
+            padding=10
+        )
+        entregas.pack(fill="x", padx=20, pady=(5, 15))
+
+        ttk.Button(
+            entregas,
+            text="Entregar todo al residente",
+            command=self.entregar_todo
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            entregas,
+            text="Entregar seleccionado",
+            command=self.entregar_seleccionado
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            entregas,
+            text="Deshacer última entrega",
+            command=self.deshacer
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            entregas,
+            text="Ver historial",
+            command=self.ver_historial
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            entregas,
+            text="Guardar cambios",
+            command=self.guardar
+        ).pack(side="left", padx=5)
+
+    def bajar_al_camion(self):
 
         guia = self.entrada_guia.get().strip().upper()
-        transportadora = (
-            self.entrada_transportadora.get().strip()
-        )
+        transportadora = self.entrada_transportadora.get().strip()
         tipo = self.tipo.get()
 
         if not guia or not transportadora or not tipo:
             messagebox.showwarning(
                 "Datos incompletos",
-                "Completa todos los campos."
+                "Escribe la guía, la transportadora y el tipo."
             )
             return
 
-        if self.lista.buscar(guia) is not None:
+        if self.unidad.buscar_pendiente(guia) is not None:
             messagebox.showerror(
                 "Guía duplicada",
-                "Ya existe un paquete con esa guía."
+                "Ya existe un paquete pendiente con esa guía."
             )
             return
 
         paquete = self.tipos[tipo](guia, transportadora)
-
-        self.lista.agregar(paquete)
+        self.unidad.descargar_camion(paquete)
 
         self.entrada_guia.delete(0, tk.END)
         self.entrada_transportadora.delete(0, tk.END)
 
+        self.actualizar_cola()
+
+        messagebox.showinfo(
+            "Camión",
+            f"El paquete {guia} entró a la cola del camión."
+        )
+
+    def ver_frente(self):
+
+        try:
+            paquete = self.unidad.siguiente_del_camion()
+        except ERRORES as error:
+            messagebox.showwarning("Camión vacío", str(error))
+            return
+
+        messagebox.showinfo(
+            "Frente de la cola",
+            f"Guía: {paquete.guia}\n"
+            f"Tipo: {paquete.tipo()}\n"
+            f"Transportadora: {paquete.transportadora}"
+        )
+
+    def asignar(self):
+
+        bloque = self.entrada_bloque.get().strip()
+        numero = self.entrada_apto.get().strip()
+
+        if not bloque or not numero.isdigit():
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Escribe el bloque y el número del apartamento."
+            )
+            return
+
+        try:
+            paquete = self.unidad.siguiente_del_camion()
+            destino = self.unidad.registrar_del_camion(bloque, numero)
+        except ERRORES as error:
+            messagebox.showerror("No se pudo asignar", str(error))
+            return
+
         self.actualizar_tabla()
 
         messagebox.showinfo(
-            "Registro exitoso",
-            f"El paquete {guia} fue registrado."
+            "Paquete asignado",
+            f"La guía {paquete.guia} quedó en el {destino}."
+        )
+
+    def rechazar(self):
+
+        try:
+            paquete = self.unidad.rechazar_del_camion()
+        except ERRORES as error:
+            messagebox.showwarning("No se puede rechazar", str(error))
+            return
+
+        self.actualizar_cola()
+
+        messagebox.showinfo(
+            "Paquete rechazado",
+            f"La guía {paquete.guia} salió del camión sin registrarse."
         )
 
     def buscar(self):
@@ -287,22 +370,21 @@ class InterfazRecepcion:
                 )
                 return
 
-        paquete = self.lista.buscar(guia)
+        paquete = self.unidad.buscar_pendiente(guia)
 
         if paquete is None:
             messagebox.showinfo(
                 "Resultado",
-                f"No se encontró la guía {guia}."
+                f"No se encontró la guía {guia} entre los pendientes."
             )
             return
 
-        vencido = (
-            "Sí" if paquete.esta_vencido() else "No"
-        )
+        vencido = "Sí" if paquete.esta_vencido() else "No"
 
         messagebox.showinfo(
             "Información del paquete",
             f"Guía: {paquete.guia}\n"
+            f"Destino: {paquete.destino}\n"
             f"Transportadora: {paquete.transportadora}\n"
             f"Tipo: {paquete.tipo()}\n"
             f"Estado: {paquete.estado}\n"
@@ -317,7 +399,27 @@ class InterfazRecepcion:
             self.tabla.focus(guia)
             self.tabla.see(guia)
 
-    def cargar_camion(self):
+    def entregar_todo(self):
+
+        bloque = self.entrada_bloque.get().strip()
+        numero = self.entrada_apto.get().strip()
+        documento = self.entrada_documento.get().strip()
+
+        try:
+            entregados = self.unidad.entregar(bloque, numero, documento)
+        except (ErrorPorteria, ValueError) as error:
+            messagebox.showerror("No se pudo entregar", str(error))
+            return
+
+        self.actualizar_tabla()
+
+        messagebox.showinfo(
+            "Entrega exitosa",
+            f"Se entregaron {entregados.cantidad()} paquetes:\n"
+            f"{entregados}"
+        )
+
+    def entregar_seleccionado(self):
 
         seleccion = self.tabla.selection()
 
@@ -328,113 +430,146 @@ class InterfazRecepcion:
             )
             return
 
+        documento = self.entrada_documento.get().strip()
+
+        if not documento:
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Escribe el documento de quien recibe."
+            )
+            return
+
         guia = seleccion[0]
-        paquete = self.lista.buscar(guia)
+        paquete = self.unidad.buscar_pendiente(guia)
 
         if paquete is None:
             messagebox.showerror(
                 "Error",
-                "El paquete ya no está en recepción."
+                "El paquete ya no está pendiente."
             )
             return
 
-        if guia in self.guias_camion:
-            messagebox.showwarning(
-                "Paquete duplicado",
-                "El paquete ya está en la cola del camión."
-            )
-            return
+        destino = paquete.destino
 
-        if paquete.estado == "Entregado":
-            messagebox.showwarning(
-                "Paquete entregado",
-                "No puedes cargar un paquete ya entregado."
+        try:
+            entregado = self.unidad.entregar_guia(
+                destino.bloque.nombre, destino.numero, guia, documento
             )
+        except (ErrorPorteria, ValueError) as error:
+            messagebox.showerror("No se pudo entregar", str(error))
             return
-
-        self.camion.encolar(paquete)
-        self.guias_camion.append(guia)
 
         self.actualizar_tabla()
-        self.actualizar_cola()
 
         messagebox.showinfo(
-            "Camión",
-            f"El paquete {guia} fue agregado a la cola."
+            "Entrega exitosa",
+            f"La guía {entregado.guia} fue entregada a "
+            f"{entregado.recibido_por}."
         )
 
-    def ver_frente(self):
+    def deshacer(self):
 
         try:
-            paquete = self.camion.ver_frente()
+            paquete = self.unidad.deshacer_entrega()
+        except ErrorPorteria as error:
+            messagebox.showwarning("Deshacer", str(error))
+            return
 
-            messagebox.showinfo(
-                "Frente de la cola",
-                f"Guía: {paquete.guia}\n"
-                f"Tipo: {paquete.tipo()}\n"
-                f"Transportadora: {paquete.transportadora}\n"
-                f"Días en portería: {paquete.dias_en_porteria()}"
-            )
+        self.actualizar_tabla()
 
-        except CamionVacio as error:
-            messagebox.showwarning(
-                "Camión vacío", str(error)
-            )
+        messagebox.showinfo(
+            "Entrega deshecha",
+            f"La guía {paquete.guia} volvió a pendientes del "
+            f"{paquete.destino}."
+        )
 
-    def despachar(self):
+    def ver_historial(self):
+
+        historial = self.unidad.historial
+
+        if historial.esta_vacia():
+            messagebox.showinfo("Historial", "Aún no hay entregas.")
+            return
+
+        messagebox.showinfo(
+            "Últimas entregas",
+            f"Total de entregas: {historial.cantidad()}\n\n"
+            f"{historial.recientes(10)}"
+        )
+
+    def guardar(self):
+
+        confirmar = messagebox.askyesno(
+            "Guardar cambios",
+            f"Esto reescribe los archivos de la carpeta "
+            f"'{CARPETA_DATOS}'. ¿Continuar?"
+        )
+
+        if not confirmar:
+            return
 
         try:
-            paquete = self.camion.desencolar()
-
-            self.lista.quitar(paquete.guia)
-            self.guias_camion.remove(paquete.guia)
-
-            self.actualizar_tabla()
-            self.actualizar_cola()
-
-            messagebox.showinfo(
-                "Despacho exitoso",
-                f"Se despachó el paquete {paquete.guia}.\n"
-                f"Días que permaneció en portería: "
-                f"{paquete.dias_en_porteria()}"
+            guardar_todo(
+                self.unidad, CARPETA_DATOS, self.unidad.historial
             )
+        except OSError as error:
+            messagebox.showerror("No se pudo guardar", str(error))
+            return
 
-        except CamionVacio as error:
-            messagebox.showwarning(
-                "No se puede despachar", str(error)
-            )
-
-        except SinPendientes as error:
-            messagebox.showwarning(
-                "Paquete no encontrado", str(error)
-            )
+        messagebox.showinfo("Guardado", "Los cambios quedaron guardados.")
 
     def actualizar_tabla(self):
-        for fila in self.tabla.get_children():            
-            self.tabla.delete(fila)        
-        bloques = self.unidad.bloques        
-        for i in range(bloques.cantidad()):            
-            bloque = bloques.obtener(i)            
-            for fila in range(bloque.pisos):                
-                for columna in range(bloque.aptos_por_piso):                    
+
+        for fila in self.tabla.get_children():
+            self.tabla.delete(fila)
+
+        bloques = self.unidad.bloques
+
+        for i in range(bloques.cantidad()):
+            bloque = bloques.obtener(i)
+            for fila in range(bloque.pisos):
+                for columna in range(bloque.aptos_por_piso):
                     apto = bloque.apartamento_en(fila, columna)
                     actual = apto.pendientes.cabeza
                     while actual is not None:
                         self.agregar_fila(actual.dato)
                         actual = actual.siguiente
+
         self.actualizar_cola()
+
+    def agregar_fila(self, paquete):
+
+        vencido = paquete.esta_vencido()
+        etiqueta = "vencido" if vencido else "en_plazo"
+        destino = paquete.destino
+
+        self.tabla.insert(
+            "",
+            tk.END,
+            iid=paquete.guia,
+            values=(
+                paquete.guia,
+                f"{destino.bloque.nombre}-{destino.numero}",
+                paquete.transportadora,
+                paquete.tipo(),
+                paquete.dias_en_porteria(),
+                paquete.dias_maximos(),
+                "Vencido" if vencido else "En plazo",
+                paquete.ubicacion()
+            ),
+            tags=(etiqueta,)
+        )
 
     def actualizar_cola(self):
 
-        cantidad = self.camion.cantidad()
+        cantidad = self.unidad.camion.cantidad()
 
         if cantidad == 0:
-            texto = "Paquetes en cola: 0 | Camión vacío"
+            texto = "Paquetes en el camión: 0 | Camión vacío"
         else:
-            frente = self.camion.ver_frente()
-
+            frente = self.unidad.siguiente_del_camion()
             texto = (
-                f"Paquetes en cola: {cantidad} | "
+                f"Paquetes en el camión: {cantidad} | "
                 f"Siguiente guía: {frente.guia}"
             )
 
@@ -445,6 +580,7 @@ class InterfazRecepcion:
         self.actualizar_tabla()
 
         self.ventana.after(60000, self.actualizar_reloj)
+
 
 if __name__ == "__main__":
 
