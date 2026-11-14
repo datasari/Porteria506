@@ -91,4 +91,3 @@ class ArbolGuias:
     izquierda=self.__en_orden(nodo.izquierdo)
     derecha=self.__en_orden(nodo.derecho)
     return izquierda+ nodo.paquete.guia + " " + derecha 
-

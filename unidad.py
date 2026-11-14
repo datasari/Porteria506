@@ -1,12 +1,13 @@
 from arreglo import Arreglo
 from recepcion import ListaPaquetes, Cola
 from Arbol import ArbolGuias
+from historial import Historial
+from deshacer import PilaEntregas
 from excepciones import (ErrorPorteria, ApartamentoInexistente,
                          BloqueInexistente, GuiaDuplicada, SinPendientes,
                          ResidenteNoAutorizado, ResidenteDuplicado)
 
 MAX_RESIDENTES = 8
-
 
 class Residente:
     def __init__(self, documento, nombre, telefono=""):

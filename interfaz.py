@@ -410,58 +410,18 @@ class InterfazRecepcion:
             )
 
     def actualizar_tabla(self):
-
-        for fila in self.tabla.get_children():
-            self.tabla.delete(fila)
-
-        actual = self.lista.cabeza
-
-        while actual is not None:
-
-            paquete = actual.dato
-            dias = paquete.dias_en_porteria()
-            limite = paquete.dias_maximos()
-            vencido = paquete.esta_vencido()
-
-            if paquete.guia in self.guias_camion:
-                estado = "En cola del camión"
-                etiqueta = "en_camion"
-
-            elif paquete.estado == "Entregado":
-                estado = "Entregado"
-                etiqueta = "en_plazo"
-
-            elif vencido:
-                estado = "Pendiente"
-                etiqueta = "vencido"
-
-            else:
-                estado = "Pendiente"
-                etiqueta = "en_plazo"
-
-            texto_vencimiento = (
-                "Vencido" if vencido else "En plazo"
-            )
-
-            self.tabla.insert(
-                "",
-                tk.END,
-                iid=paquete.guia,
-                values=(
-                    paquete.guia,
-                    paquete.transportadora,
-                    paquete.tipo(),
-                    estado,
-                    dias,
-                    limite,
-                    texto_vencimiento,
-                    paquete.ubicacion()
-                ),
-                tags=(etiqueta,)
-            )
-
-            actual = actual.siguiente
-
+        for fila in self.tabla.get_children():            
+            self.tabla.delete(fila)        
+        bloques = self.unidad.bloques        
+        for i in range(bloques.cantidad()):            
+            bloque = bloques.obtener(i)            
+            for fila in range(bloque.pisos):                
+                for columna in range(bloque.aptos_por_piso):                    
+                    apto = bloque.apartamento_en(fila, columna)
+                    actual = apto.pendientes.cabeza
+                    while actual is not None:
+                        self.agregar_fila(actual.dato)
+                        actual = actual.siguiente
         self.actualizar_cola()
 
     def actualizar_cola(self):
