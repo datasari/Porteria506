@@ -12,6 +12,8 @@ from recepcion import ListaPaquetes, Cola
 from unidad import Unidad, Residente, ArregloResidentes
 from archivos import cargar_todo, guardar_todo
 from Arbol import ArbolGuias
+from historial import Historial
+from deshacer import PilaEntregas
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -212,12 +214,57 @@ def probar_arbol():
     revisar("entregado ya no es pendiente", u.buscar_pendiente("G1") is None and u.guias.buscar("G1") is not None)
 
 
+def probar_historial():
+    h = Historial()
+    revisar("historial vacío", h.esta_vacia() and h.cantidad() == 0 and str(h) == "Historial vacío")
+    for g in ["H1", "H2", "H3"]:
+        h.agregar(Caja(g, "X"))
+    revisar("agregar al final", h.cantidad() == 3 and h.cabeza.dato.guia == "H1" and h.cola.dato.guia == "H3")
+    revisar("enlaces dobles", h.cola.anterior.dato.guia == "H2" and h.cabeza.anterior is None
+            and h.cabeza.siguiente.siguiente is h.cola)
+    revisar("recientes empieza por la más nueva", h.recientes(2).splitlines()[0].startswith("1. H3"))
+    ultimo = h.quitar_ultimo()
+    revisar("quitar el último", ultimo.guia == "H3" and h.cantidad() == 2 and h.cola.siguiente is None)
+    h.quitar_ultimo()
+    h.quitar_ultimo()
+    revisar("historial vacío lanza", h.cabeza is None and lanza(h.quitar_ultimo, ErrorPorteria))
+    u = unidad_de_prueba()
+    for g in ["E1", "E2"]:
+        u.registrar_llegada(2, 1204, Caja(g, "X"))
+    u.entregar(2, 1204, "111")
+    revisar("la unidad guarda las entregas", u.historial.cantidad() == 2
+            and u.historial.de_apartamento(2, 1204).cantidad() == 2)
+
+
+def probar_deshacer():
+    pila = PilaEntregas()
+    revisar("pila vacía lanza", pila.esta_vacia() and lanza(pila.desapilar, ErrorPorteria)
+            and lanza(pila.ver_tope, ErrorPorteria))
+    for g in ["P1", "P2", "P3"]:
+        pila.apilar(Caja(g, "X"))
+    revisar("tope es el último", pila.cantidad() == 3 and pila.ver_tope().guia == "P3")
+    revisar("sale en orden LIFO", [pila.desapilar().guia for _ in range(3)] == ["P3", "P2", "P1"])
+    u = unidad_de_prueba()
+    for g in ["D1", "D2"]:
+        u.registrar_llegada(2, 1204, Caja(g, "X"))
+    u.entregar(2, 1204, "111")
+    paquete = u.deshacer_entrega()
+    revisar("deshacer devuelve el último", paquete.guia == "D2" and paquete.estado == "Pendiente")
+    apto = u.apartamento(2, 1204)
+    revisar("vuelve al apartamento y sale del historial", apto.pendientes.cantidad() == 1
+            and u.historial.cantidad() == 1)
+    revisar("el árbol lo vuelve a encontrar", u.buscar_pendiente("D2") is paquete)
+    u.deshacer_entrega()
+    revisar("deshacer de más lanza", lanza(u.deshacer_entrega, ErrorPorteria))
+
+
 if __name__ == "__main__":
     for nombre, prueba in [("Excepciones", probar_excepciones), ("Arreglo", probar_arreglo),
                            ("Paquetes", probar_paquetes), ("Lista de pendientes", probar_lista),
                            ("Cola", probar_cola), ("Unidad", probar_unidad),
                            ("Camión", probar_camion), ("Archivos", probar_archivos),
-                           ("Árbol de guías", probar_arbol)]:
+                           ("Árbol de guías", probar_arbol), ("Historial", probar_historial),
+                           ("Deshacer", probar_deshacer)]:
         antes = RESULTADOS["mal"]
         prueba()
         print(f"{'✅' if RESULTADOS['mal'] == antes else '❌'} {nombre}")
