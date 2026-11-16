@@ -3,7 +3,6 @@ from datetime import datetime
 
 from excepciones import ErrorPorteria, ArchivoDanado, ArchivoInexistente
 from paquetes import TIPOS, FORMATO_FECHA
-from recepcion import ListaPaquetes
 from unidad import Unidad, Residente
 
 
@@ -62,7 +61,7 @@ def cargar_residentes(unidad, ruta):
 
 
 def cargar_paquetes(unidad, ruta):
-    entregados = ListaPaquetes()
+    entregados = unidad.historial
     if not os.path.exists(ruta):
         return entregados
     with open(ruta, "r", encoding="utf-8") as f:

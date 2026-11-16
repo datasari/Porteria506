@@ -45,10 +45,6 @@ def demo():
     except ErrorPorteria as e:
         print(f"\n{e}")
 
-    actual = recibidos.cabeza
-    while actual is not None:
-        entregados.agregar(actual.dato)
-        actual = actual.siguiente
     guardar_todo(unidad, "datos_guardados", entregados)
     otra, otros_entregados = cargar_todo("datos_guardados")
     print(f"\nGuardado y vuelto a cargar: {otra.total_pendientes()} pendientes, "

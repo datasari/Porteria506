@@ -1,6 +1,7 @@
 from arreglo import Arreglo
 from recepcion import ListaPaquetes, Cola
 from Arbol import ArbolGuias
+from historial import Historial
 from excepciones import (ErrorPorteria, ApartamentoInexistente,
                          BloqueInexistente, GuiaDuplicada, SinPendientes,
                          ResidenteNoAutorizado, ResidenteDuplicado)
@@ -190,6 +191,7 @@ class Unidad:
         self.__bloques = ArregloBloques(cantidad_bloques)
         self.__camion = Cola()
         self.__guias = ArbolGuias()
+        self.__historial = Historial()
 
     @property
     def nombre(self):
@@ -234,12 +236,18 @@ class Unidad:
     @property
     def guias(self):
         return self.__guias
-    def buscar_pendiente(self,guia):
-        paquete= self.__guias.buscar(str(guia).strip().upper())
+
+    @property
+    def historial(self):
+        return self.__historial
+
+    def buscar_pendiente(self, guia):
+        paquete = self.__guias.buscar(str(guia).strip().upper())
         if paquete is None or paquete.estado != "Pendiente":
             return None
         return paquete
-    def buscar_pendiente_lineal(self,guia):
+
+    def buscar_pendiente_lineal(self, guia):
         guia = str(guia).strip().upper()
         for i in range(self.__bloques.cantidad()):
             bloque = self.__bloques.obtener(i)
@@ -261,12 +269,19 @@ class Unidad:
 
     def entregar(self, bloque, numero, documento, momento=None):
         apto = self.apartamento(bloque, numero)
-        return apto.entregar_todos(documento, momento)
+        entregados = apto.entregar_todos(documento, momento)
+        actual = entregados.cabeza
+        while actual is not None:
+            self.__historial.agregar(actual.dato)
+            actual = actual.siguiente
+        return entregados
 
     def entregar_guia(self, bloque, numero, guia, documento,
                       momento=None):
         apto = self.apartamento(bloque, numero)
-        return apto.entregar(guia, documento, momento)
+        paquete = apto.entregar(guia, documento, momento)
+        self.__historial.agregar(paquete)
+        return paquete
 
     def rechazar_del_camion(self):
         return self.__camion.desencolar()
