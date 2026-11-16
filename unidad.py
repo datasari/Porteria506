@@ -2,6 +2,7 @@ from arreglo import Arreglo
 from recepcion import ListaPaquetes, Cola
 from Arbol import ArbolGuias
 from historial import Historial
+from deshacer import PilaEntregas
 from excepciones import (ErrorPorteria, ApartamentoInexistente,
                          BloqueInexistente, GuiaDuplicada, SinPendientes,
                          ResidenteNoAutorizado, ResidenteDuplicado)
@@ -192,6 +193,7 @@ class Unidad:
         self.__camion = Cola()
         self.__guias = ArbolGuias()
         self.__historial = Historial()
+        self.__deshacer = PilaEntregas()
 
     @property
     def nombre(self):
@@ -273,14 +275,23 @@ class Unidad:
         actual = entregados.cabeza
         while actual is not None:
             self.__historial.agregar(actual.dato)
+            self.__deshacer.apilar(actual.dato)
             actual = actual.siguiente
         return entregados
+
+    def deshacer_entrega(self):
+        paquete = self.__deshacer.desapilar()
+        self.__historial.quitar_ultimo()
+        paquete.devolver_a_pendiente()
+        paquete.destino.recibir(paquete)
+        return paquete
 
     def entregar_guia(self, bloque, numero, guia, documento,
                       momento=None):
         apto = self.apartamento(bloque, numero)
         paquete = apto.entregar(guia, documento, momento)
         self.__historial.agregar(paquete)
+        self.__deshacer.apilar(paquete)
         return paquete
 
     def rechazar_del_camion(self):
