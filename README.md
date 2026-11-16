@@ -33,7 +33,18 @@ estructura de datos, programada desde cero (sin usar `list` ni `dict` de Python 
 Además hay 4 tipos de paquete con herencia y una clase abstracta (`paquetes.py`), una jerarquía de excepciones
 propias (`excepciones.py`) y la lectura y escritura de CSV (`archivos.py`).
 
-## Cómo correrlo
+## Abrir sin instalar Python
+
+**[⬇ Descargar Porteria506.exe](https://drive.google.com/file/d/1r7zPzHOamTPUh9xZj4sltQa5S1gsXC0K/view?usp=sharing)**
+(Windows, 8,6 MB). Es la interfaz completa empaquetada con PyInstaller, con Python y los datos de ejemplo
+adentro: se descarga y se abre con doble clic, sin instalar nada.
+
+- Si Windows muestra «Windows protegió su PC», es porque el programa no está firmado: **Más información →
+  Ejecutar de todas formas**.
+- Si junto al `.exe` hay una carpeta `datos/`, el programa usa esa (y «Guardar cambios» escribe ahí). Si no, usa
+  los datos de ejemplo que trae adentro.
+
+## Cómo correrlo con Python
 
 Usa solo la librería estándar de Python. La gráfica del experimento necesita matplotlib, que ya viene con Spyder.
 
